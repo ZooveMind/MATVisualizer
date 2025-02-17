@@ -1,0 +1,7 @@
+flask
+scipy
+numpy
+matplotlib
+seaborn
+h5py
+opencv-python-headless

@@ -1,0 +1,74 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Upload .mat File</title>
+</head>
+<body>
+    <h2>Upload a .mat File</h2>
+    <form action="/upload" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" required>
+        <button type="submit">Upload</button>
+    </form>
+</body>
+</html> -->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload .mat File</title>
+</head>
+<body>
+    <h1>Upload .mat or .h5 File</h1>
+    <form action="/upload" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" accept=".mat,.h5">
+        <button type="submit">Upload</button>
+    </form>
+</body>
+</html>
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAT File Visualizer</title>
+    <script>
+        async function uploadMatFile(event) {
+            event.preventDefault();
+            const formData = new FormData();
+            formData.append("file", document.getElementById("matFile").files[0]);
+
+            document.getElementById("status").innerText = "Processing...";
+            
+            const response = await fetch("/upload", { method: "POST", body: formData });
+            const data = await response.json();
+            if (data.error) {
+                document.getElementById("status").innerText = "Error: " + data.error;
+                return;
+            }
+
+            document.getElementById("status").innerText = "Analysis Complete!";
+            const container = document.getElementById("results");
+            container.innerHTML = "";
+            data.images.forEach(imgSrc => {
+                const img = document.createElement("img");
+                img.src = imgSrc;
+                img.style.width = "500px";
+                container.appendChild(img);
+            });
+        }
+    </script>
+</head>
+<body>
+    <h1>Upload a .MAT File</h1>
+    <form onsubmit="uploadMatFile(event)">
+        <input type="file" id="matFile" required>
+        <button type="submit">Upload & Process</button>
+    </form>
+    <p id="status"></p>
+    <div id="results"></div>
+</body>
+</html> -->

@@ -1,0 +1,44 @@
+# Ignore Python cache files
+__pycache__/
+*.py[cod]
+*.so
+
+# Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore virtual environments
+venv/
+env/
+*.venv
+Pipfile
+Pipfile.lock
+
+# Ignore logs and temporary files
+*.log
+*.tmp
+*.bak
+*.swp
+
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Ignore compiled Python files
+*.pyo
+*.pyc
+
+# Ignore your specific secret files
+mat-file-visualizer/scripts/gpt_integration.py
+mat-file-visualizer/scripts/__pycache__/gpt_integration.cpython-313.pyc
+
+# Ignore configuration files
+*.env
+.env
+config.json
+secrets.json
+
+# Ignore Git and JetBrains IDE settings
+.git/
+.idea/
+.vscode/
+*.iml

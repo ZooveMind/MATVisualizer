@@ -1,0 +1,54 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Processed Results</title>
+</head>
+<body>
+    <h2>Processed Results</h2>
+    {% if results %}
+        {% for result in results %}
+        <div>
+            <h3>{{ result.variable }}</h3>
+        
+            {% if result.file %}
+                <img src="{{ result.file }}" alt="Plot" width="500px"/>
+            {% elif result.value %}
+                <p>Value: <strong>{{ result.value }}</strong></p>
+            {% else %}
+                <p>No visualization available</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    {% else %}
+        <p>No plots were generated. Check your .mat file format.</p>
+    {% endif %}
+</body>
+</html> -->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Processed Results</title>
+</head>
+<body>
+    <h2>Processed Results</h2>
+    {% if results %}
+        {% for result in results %}
+        <div>
+            <h3>{{ result.variable }}</h3>
+        
+            {% if result.file %}
+                <img src="{{ result.file }}" alt="Plot" height="300px" width="500px"/>
+            {% elif result.value %}
+                <p>Value: <strong>{{ result.value }}</strong></p>
+            {% else %}
+                <p>No visualization available</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    {% else %}
+        <p>No plots were generated. Check your .mat file format.</p>
+    {% endif %}
+</body>
+</html>
