@@ -7,6 +7,8 @@ from scripts.EBVisualizer import EVizTool, load_event_file
 import scipy.io
 import h5py
 from io import BytesIO
+from flask_cors import CORS
+CORS(app)
 
 app = Flask(__name__)
 
