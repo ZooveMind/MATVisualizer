@@ -8,9 +8,9 @@ import scipy.io
 import h5py
 from io import BytesIO
 from flask_cors import CORS
-CORS(app)
 
 app = Flask(__name__)
+CORS(app)
 
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
