@@ -7,6 +7,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from scipy.stats import gaussian_kde
+from flask import url_for
 
 class EVizTool:
     def __init__(self, event_file_name, event_data_frame, sensor_size):
@@ -113,28 +114,43 @@ class EVizTool:
         plt.tight_layout()
 
     def save_plot(self, filename):
-        filepath = os.path.join('static/images', f"{filename}.png")
-        plt.savefig(filepath, dpi=300)
+        # filepath = os.path.join('static/images', f"{filename}.png")
+        # plt.savefig(filepath, dpi=300)
+        # plt.close()
+        # return f"/{filepath}"
+        
+        folder = 'static/images'
+        os.makedirs(folder, exist_ok=True)
+        localPath = os.path.join(folder, f"{filename}.png")
+        plt.savefig(localPath,dpi=300)
         plt.close()
-        return f"/{filepath}"
+
+        # Return absolute URL, e.g. https://my-flask-app.onrender.com/static/images/filename.png
+        urlFor = url_for('static', filename=f"images/{filename}.png", _external=True)
+        return urlFor,localPath
 
     def visualize_event_data(self):
         results = []
 
         self.plot_event_histogram()
-        results.append({'variable': 'Event Time Histogram', 'file': self.save_plot('event_histogram')})
+        file_url, file_pathLocal = self.save_plot('event_histogram')
+        results.append({'variable': 'Event Time Histogram', 'file': file_url,'file_pathLocal':file_pathLocal})
 
         self.plot_temporal_kernel_density()
-        results.append({'variable': 'Temporal Kernel Density', 'file': self.save_plot('temporal_kernel_density')})
+        file_url, file_pathLocal = self.save_plot('temporal_kernel_density')
+        results.append({'variable': 'Temporal Kernel Density', 'file':file_url, 'file_pathLocal':file_pathLocal})
 
         self.plot_event_on_off_map()
-        results.append({'variable': 'Event ON/OFF Map', 'file': self.save_plot('event_on_off_map')})
+        file_url, file_pathLocal = self.save_plot('event_on_off_map')
+        results.append({'variable': 'Event ON/OFF Map', 'file':file_url, 'file_pathLocal':file_pathLocal})
 
         self.plot_polarity_count_at_given_pixel()
-        results.append({'variable': 'Polarity Count at Given Pixel', 'file': self.save_plot('polarity_count')})
+        file_url, file_pathLocal = self.save_plot('polarity_count')
+        results.append({'variable': 'Polarity Count at Given Pixel', 'file':file_url, 'file_pathLocal':file_pathLocal})
 
         self.plot_event_intensity_map()
-        results.append({'variable': 'Event Intensity Map', 'file': self.save_plot('event_intensity_map')})
+        file_url, file_pathLocal = self.save_plot('event_intensity_map')
+        results.append({'variable': 'Event Intensity Map', 'file':file_url, 'file_pathLocal':file_pathLocal})
 
         return results
 

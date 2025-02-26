@@ -8,32 +8,43 @@ import scipy.io
 import h5py
 from io import BytesIO
 from flask_cors import CORS
+import time
+import threading
 
-app = Flask(__name__)
+app = Flask(__name__,static_folder='static')
 CORS(app)
 
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+# app.config['SERVER_NAME'] = '192.168.1.13:5000'
+
 @app.route('/')
 def index():
     return "Hello from Flask on Render!"
-    #return render_template('index.html')
-if __name__ == '__main__':
-    app.run(debug=True,host='0.0.0.0', port=5000)
 
 
-# @app.route('/', methods=['GET'])
-# def index():
-#     return "Flask backend is running!"
+def cleanup_files(paths, delay):
+    """
+    Delete the given file paths after 'delay' seconds.
+    Spawns a background thread so it won't block the main request.
+    """
+    def remove_later():
+        time.sleep(delay)
+        for p in paths:
+            if os.path.exists(p):
+                try:
+                    os.remove(p)
+                except OSError:
+                    pass  # ignore if already removed or no permissions
+
+    thread = threading.Thread(target=remove_later, daemon=True)
+    thread.start()
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
-    
-    # 3) Renames file with timestamp
-    # 4) Saves file in that folder
-
     # 1) Receives file from client check for file and mode(how to process 0-ebssa 1-generic)
+
     if 'file' not in request.files:
         return jsonify({'error': 'No file uploaded'}), 400
 
@@ -50,30 +61,59 @@ def upload_file():
     if mode not in (0,1):
         return jsonify({'error': 'No valid mode provided'}), 400
 
-    # # 2) Create a new subfolder named by today's date (e.g. "2025-02-24")
-    # date_str = datetime.datetime.now().strftime('%Y-%m-%d')
-    # date_folder = os.path.join(app.config['UPLOAD_FOLDER'], date_str)
-    # if not os.path.exists(date_folder):
-    #     os.makedirs(date_folder)
+    # 2) Create a new subfolder named by today's date (e.g. "2025-02-24")
+    date_str = datetime.datetime.now().strftime('%Y-%m-%d')
+    date_folder = os.path.join(app.config['UPLOAD_FOLDER'], date_str)
+    if not os.path.exists(date_folder):
+        os.makedirs(date_folder)
 
-    # # 3) Rename file to include a timestamp (e.g. "originalname_14-30-00_USERID.ext")
-    # #TODO REMBER TO ADD USERID
-    # time_str = datetime.datetime.now().strftime('%H-%M-%S')
-    # original_name, ext = os.path.splitext(file.filename)
-    # new_filename = f"{original_name}_{time_str}{ext}"
+    # 3) Rename file to include a timestamp (e.g. "originalname_14-30-00_USERID.ext")
+    #TODO REMBER TO ADD USERID
+    time_str = datetime.datetime.now().strftime('%H-%M-%S')
+    original_name, ext = os.path.splitext(file.filename)
+    new_filename = f"{original_name}_{time_str}{ext}"
 
-    # file_path = os.path.join(date_folder, new_filename)
-    # file.save(file_path)
-
+    file_path = os.path.join(date_folder, new_filename)
+    file.save(file_path)
 
     #without strong the files
+    
+    # file_content = file.read()
+    # file_bytes = BytesIO(file_content)
 
-    file_content = file.read()
-    file_bytes = BytesIO(file_content)
+    # filename = file.filename
+    # ext = os.path.splitext(filename)[1].lower()
+    if mode == 0:
+        #ebssa logic
+        try:                   
+            event_name, event_df, sensor_dim = load_event_file(file_path)
+            eviz_obj = EVizTool(event_name, event_df, sensor_dim)
+            results = eviz_obj.visualize_event_data()
+        except KeyError as e:
+            return jsonify({'error': str(e)}), 400
+        except ValueError as e:
+            return jsonify({'error': str(e)}), 400
+    elif mode== 1:
+        # GENERIC logic
+        results = process_mat_file(file_path)
+    
+    files_to_remove = []
+    files_to_remove.append(file_path)
+    # add each generated image
+    for r in results:
+        if 'file_pathLocal' in r and r['file_pathLocal']:
+            files_to_remove.append(r['file_pathLocal'])
 
-    filename = file.filename
-    ext = os.path.splitext(filename)[1].lower()
+    cleanup_files(files_to_remove, delay=300)
 
+    return jsonify(results)
+
+if __name__ == '__main__':
+    app.run(debug=True,host='0.0.0.0', port=5000)
+
+
+    """
+   
     if mode == 0:
         #ebssa logic
         try:
@@ -102,10 +142,11 @@ def upload_file():
             file_bytes.seek(0)
             with h5py.File(file_bytes, 'r') as h5file:
                 results = process_mat_file(h5file)
+     """
+    # return "got it",200
+    # return render_template('results.html', results=results)
 
-    return render_template('results.html', results=results)
-
-
+    
 # EBSSA FILE 
 # from flask import Flask, render_template, request, jsonify
 # import os

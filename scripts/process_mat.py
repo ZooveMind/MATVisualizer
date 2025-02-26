@@ -9,6 +9,7 @@ import seaborn as sns
 from mpl_toolkits.mplot3d import Axes3D
 import scipy.sparse
 from scipy.io.matlab.mio5_params import mat_struct   # <-- Import mat_struct
+from flask import url_for
 
 OUTPUT_FOLDER = 'static/images'
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
@@ -17,10 +18,20 @@ os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 MAX_DIM = 200
 
 def save_plot(fig, filename):
-    filepath = os.path.join(OUTPUT_FOLDER, f"{filename}.png")
-    fig.savefig(filepath, dpi=300)
+    # filepath = os.path.join(OUTPUT_FOLDER, f"{filename}.png")
+    # fig.savefig(filepath, dpi=300)
+    # plt.close(fig)
+    # return f"/{filepath}"
+
+    folder = 'static/images'
+    os.makedirs(folder, exist_ok=True)
+    localPath = os.path.join(folder, f"{filename}.png")
+    fig.savefig(localPath,dpi=300)
     plt.close(fig)
-    return f"/{filepath}"
+
+    # Return absolute URL, e.g. https://my-flask-app.onrender.com/static/images/filename.png
+    urlFor = url_for('static', filename=f"images/{filename}.png", _external=True)
+    return urlFor,localPath
 
 def analyze_mat_struct(key, data):
     """
@@ -80,8 +91,8 @@ def analyze_and_plot(key, data):
             ax.plot(imag_part, label='Imag Part', linestyle='dashed')
             ax.set_title(f"{key} (Complex)")
             ax.legend()
-            plot_path = save_plot(fig, f"{key}_complex")
-            results.append({'variable': f"{key} (Complex)", 'file': plot_path})
+            plot_path,local_path = save_plot(fig, f"{key}_complex")
+            results.append({'variable': f"{key} (Complex)", 'file': plot_path,'file_pathLocal':local_path})
             return results
 
         # Handle scalar stored in ndarray
@@ -100,8 +111,8 @@ def analyze_and_plot(key, data):
                     labels, vals = zip(*counts)
                     ax.bar(labels, vals, color='skyblue')
                     ax.set_title(f"{key} - Bar Chart (Categorical)")
-                    plot_path = save_plot(fig, f"{key}_bar")
-                    results.append({'variable': key, 'file': plot_path})
+                    plot_path,local_path = save_plot(fig, f"{key}_bar")
+                    results.append({'variable': key, 'file': plot_path,'file_pathLocal':local_path})
                 else:
                     # Default to line plot
                     fig, ax = plt.subplots()
@@ -110,8 +121,8 @@ def analyze_and_plot(key, data):
                     stats = get_basic_stats(data)
                     stats_str = f"(mean={stats['mean']:.2f}, std={stats['std']:.2f}, min={stats['min']:.2f}, max={stats['max']:.2f})"
                     ax.set_xlabel(stats_str)
-                    plot_path = save_plot(fig, key)
-                    results.append({'variable': key, 'file': plot_path, 'stats': stats})
+                    plot_path,local_path = save_plot(fig, key)
+                    results.append({'variable': key, 'file': plot_path, 'stats': stats,'file_pathLocal':local_path})
             elif data.dtype == object:
                 # Possibly a cell array or object array
                 results.append({
@@ -160,16 +171,16 @@ def analyze_and_plot(key, data):
                         ax.scatter(data[:, 0], data[:, 1], data[:, 2], alpha=0.7)
                         ax.set_title(f"{key} - 3D Scatter")
                     stats = get_basic_stats(data)
-                    plot_path = save_plot(fig, key)
-                    results.append({'variable': key, 'file': plot_path, 'stats': stats})
+                    plot_path,local_path = save_plot(fig, key)
+                    results.append({'variable': key, 'file': plot_path, 'stats': stats,'file_pathLocal':local_path})
                 else:
                     # Default Heatmap
                     fig, ax = plt.subplots()
                     sns.heatmap(data, cmap='viridis', ax=ax)
                     ax.set_title(f"{key} - 2D Heatmap")
                     stats = get_basic_stats(data)
-                    plot_path = save_plot(fig, key)
-                    results.append({'variable': key, 'file': plot_path, 'stats': stats})
+                    plot_path,local_path = save_plot(fig, key)
+                    results.append({'variable': key, 'file': plot_path, 'stats': stats,'file_pathLocal':local_path})
             elif data.dtype == object:
                 results.append({
                     'variable': key,
@@ -199,8 +210,8 @@ def analyze_and_plot(key, data):
                         slice_data = slice_data[::rf, ::cf]
                     fig, ax = plt.subplots()
                     sns.heatmap(slice_data, cmap='viridis', ax=ax)
-                    plot_path = save_plot(fig, f"{key}_slice_{i}")
-                    results.append({'variable': f"{key} (slice {i})", 'file': plot_path})
+                    plot_path,local_path = save_plot(fig, f"{key}_slice_{i}")
+                    results.append({'variable': f"{key} (slice {i})", 'file': plot_path,'file_pathLocal':local_path})
             else:
                 results.append({
                     'variable': key,
@@ -222,8 +233,8 @@ def analyze_and_plot(key, data):
         dense_data = data.toarray()
         fig, ax = plt.subplots()
         sns.heatmap(dense_data, cmap='viridis', ax=ax)
-        plot_path = save_plot(fig, key)
-        results.append({'variable': key, 'file': plot_path})
+        plot_path,local_path = save_plot(fig, key)
+        results.append({'variable': key, 'file': plot_path,'file_pathLocal':local_path})
 
     # 5. Scalars
     elif isinstance(data, (int, float, bool)):
