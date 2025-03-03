@@ -67,7 +67,7 @@ def upload_file():
         return jsonify({'error': 'No userName found'}), 400
     
     fileSize = request.form.get("fileSize")
-    
+
     # 2) Create a new subfolder named by today's date (e.g. "2025-02-24")
     date_str = datetime.datetime.now().strftime('%Y-%m-%d')
     date_folder = os.path.join(app.config['UPLOAD_FOLDER'], date_str)
@@ -95,7 +95,7 @@ def upload_file():
     # file_bytes = BytesIO(file_content)
     # filename = file.filename
     # ext = os.path.splitext(filename)[1].lower()
-
+    # 03-03-2025|11.30|sujeet|added auto logs files generation feature
     if mode == 0:
         #ebssa logic
         try:                   
