@@ -1,21 +1,22 @@
-# GENERIC MAT ACCESS
 import os
 import datetime
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, request, jsonify
 from scripts.process_mat import process_mat_file
 from scripts.EBVisualizer import EVizTool, load_event_file
-import scipy.io
-import h5py
-from io import BytesIO
 from flask_cors import CORS
 import time
 import threading
+import uuid
+
 
 app = Flask(__name__,static_folder='static')
 CORS(app)
 
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+LOGS_FOLDER = 'logs'
+app.config['LOGS_FOLDER'] = LOGS_FOLDER
 
 # app.config['SERVER_NAME'] = '192.168.1.13:5000'
 
@@ -44,6 +45,7 @@ def cleanup_files(paths, delay):
 @app.route('/upload', methods=['POST'])
 def upload_file():
     # 1) Receives file from client check for file and mode(how to process 0-ebssa 1-generic)
+    start_time = datetime.now()
 
     if 'file' not in request.files:
         return jsonify({'error': 'No file uploaded'}), 400
@@ -55,19 +57,31 @@ def upload_file():
     mode_str = request.form.get('mode', None)
     if mode_str is None:
         return jsonify({'error': 'No mode provided'}), 400
-
     # Convert mode to integer
     mode = int(mode_str)
     if mode not in (0,1):
         return jsonify({'error': 'No valid mode provided'}), 400
 
+    userName = request.form.get("userName",None)
+    if userName is None:
+        return jsonify({'error': 'No userName found'}), 400
+    
+    fileSize = request.form.get("fileSize")
+    
     # 2) Create a new subfolder named by today's date (e.g. "2025-02-24")
     date_str = datetime.datetime.now().strftime('%Y-%m-%d')
     date_folder = os.path.join(app.config['UPLOAD_FOLDER'], date_str)
     if not os.path.exists(date_folder):
         os.makedirs(date_folder)
 
-    # 3) Rename file to include a timestamp (e.g. "originalname_14-30-00_USERID.ext")
+    # 3) Create a new subfolder named by today's date for log files (e.g. "2025-02-24")
+    LogDate_folder = os.path.join(app.config['LOGS_FOLDER'], date_str)
+    if not os.path.exists(LogDate_folder):
+        os.makedirs(LogDate_folder)  
+
+    job_id = str(uuid.uuid4())
+    
+    # 4) Rename file to include a timestamp (e.g. "originalname_14-30-00_USERID.ext")
     #TODO REMBER TO ADD USERID
     time_str = datetime.datetime.now().strftime('%H-%M-%S')
     original_name, ext = os.path.splitext(file.filename)
@@ -77,12 +91,11 @@ def upload_file():
     file.save(file_path)
 
     #without strong the files
-    
     # file_content = file.read()
     # file_bytes = BytesIO(file_content)
-
     # filename = file.filename
     # ext = os.path.splitext(filename)[1].lower()
+
     if mode == 0:
         #ebssa logic
         try:                   
@@ -99,12 +112,25 @@ def upload_file():
     
     files_to_remove = []
     files_to_remove.append(file_path)
-    # add each generated image
+    # add each generated image for clean up process
     for r in results:
         if 'file_pathLocal' in r and r['file_pathLocal']:
             files_to_remove.append(r['file_pathLocal'])
 
     cleanup_files(files_to_remove, delay=300)
+
+    # log file generated
+    end_time = datetime.now()
+    log_filename = os.path.join(LogDate_folder, f'{job_id+"_"+userName}.log')
+    with open(log_filename, 'a', encoding='utf-8') as logf:
+        logf.write(f"=== Job Log ===\n")
+        logf.write(f"User Name   : {userName}\n")
+        logf.write(f"Job ID      : {job_id}\n")
+        logf.write(f"Start Time  : {start_time}\n")
+        logf.write(f"End Time    : {end_time}\n")
+        logf.write(f"File Type   : {ext}\n")
+        logf.write(f"File size   : {fileSize}\n")
+        logf.write(f"--------------\n\n")
 
     return jsonify(results)
 
