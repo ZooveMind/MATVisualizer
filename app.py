@@ -1,5 +1,6 @@
 import os
-import datetime
+from datetime import datetime
+import shutil
 from flask import Flask, request, jsonify
 from scripts.process_mat import process_mat_file
 from scripts.EBVisualizer import EVizTool, load_event_file
@@ -69,8 +70,15 @@ def upload_file():
     fileSize = request.form.get("fileSize")
 
     # 2) Create a new subfolder named by today's date (e.g. "2025-02-24")
-    date_str = datetime.datetime.now().strftime('%Y-%m-%d')
+    date_str = datetime.now().strftime('%Y-%m-%d')
     date_folder = os.path.join(app.config['UPLOAD_FOLDER'], date_str)
+    if os.path.exists(UPLOAD_FOLDER):
+        for item in os.listdir(UPLOAD_FOLDER):
+            item_path = os.path.join(UPLOAD_FOLDER, item)
+            # Only remove if it's a folder and not today's folder
+            if os.path.isdir(item_path) and item != date_str:
+                shutil.rmtree(item_path)
+
     if not os.path.exists(date_folder):
         os.makedirs(date_folder)
 
@@ -83,7 +91,7 @@ def upload_file():
     
     # 4) Rename file to include a timestamp (e.g. "originalname_14-30-00_USERID.ext")
     #TODO REMBER TO ADD USERID
-    time_str = datetime.datetime.now().strftime('%H-%M-%S')
+    time_str = datetime.now().strftime('%H-%M-%S')
     original_name, ext = os.path.splitext(file.filename)
     new_filename = f"{original_name}_{time_str}{ext}"
 
